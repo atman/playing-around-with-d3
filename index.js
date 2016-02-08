@@ -32,19 +32,31 @@ var circleAttributes = circles
                             .style("fill",function(d){return d.color;});*/
 
 var data = [];
-var width = 500;
+var width = 1000;
 var height = 200;
 var padding = 1;
+var max = 0;
+var min = 0;
 
-for (var i = 0; i < 25; i++) {           //Loop 25 times
-    var newNumber = Math.round(Math.random() * 50);  //New random number (0-30)
-    data.push(newNumber);             //Add new number to array
+for (var i = 0; i < 100; i++) {           //Loop 25 times
+    var newNumber = Math.round(Math.random() * 50);
+    //New random number (0-30)
+    data.push(newNumber);
 }
+min = d3.min(data);
+max = d3.max(data);
+var chartScale = d3.scale.linear()
+                      .domain([min,max]) //input
+                      .rangeRound([min, height])
+                      .nice(); //output
+
+chartScale(44);
 
 var svgPlaceholder = d3.select("body")
                           .append("svg")
                           .attr("height",height)
-                          .attr("width",width)
+                          .attr("width",width);
+
 
 
 svgPlaceholder.selectAll("rect")
@@ -55,11 +67,11 @@ svgPlaceholder.selectAll("rect")
         return i * width/data.length;
       })
       .attr("y",function(d){
-        return height-(d*4);
+        return height-(chartScale(d));
       })
       .attr("width",width/data.length - padding)
       .attr("height",function(d){
-        return d*4;
+        return chartScale(d);
       })
 
 svgPlaceholder.selectAll("text")
@@ -71,9 +83,9 @@ svgPlaceholder.selectAll("text")
      return  i * (width/data.length) + (width / data.length - padding) / 2;;
    })
    .attr("y",function(d){
-     return height-(d*4) + 10;
+     return height-(chartScale(d)) + 15;
    })
    .attr("text-anchor", "middle")
    .attr("font-family", "sans-serif")
-   .attr("font-size", "11px")
+   .attr("font-size", "8px")
    .attr("fill", "white");
