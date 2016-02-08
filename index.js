@@ -33,31 +33,54 @@ var circleAttributes = circles
 
 var data = [];
 var width = 1000;
-var height = 200;
-var padding = 1;
+var height = 300;
+var padding = 3;
 var max = 0;
 var min = 0;
 
-for (var i = 0; i < 100; i++) {           //Loop 25 times
+for (var i = 0; i < 50; i++) {           //Loop 25 times
     var newNumber = Math.round(Math.random() * 50);
     //New random number (0-30)
     data.push(newNumber);
 }
+
 min = d3.min(data);
 max = d3.max(data);
-var chartScale = d3.scale.linear()
-                      .domain([min,max]) //input
-                      .rangeRound([min, height])
-                      .nice(); //output
+/*
+ * AXES
+ * 1. Create a scale for each axis
+ * 2. Create new axes
+ * 3. Append after main data is added
+ */
 
-chartScale(44);
+var xScale = d3.scale.linear()
+                      .domain([0,data.length])
+                      .range([0,width]);
+var yScale = d3.scale.linear()
+                     .domain([min,max]) //input
+                     .rangeRound([min, height-20]) //output
+                     .nice();
 
+var xAxis = d3.svg.axis()
+              .scale(xScale)
+              .orient("bottom")
+              .ticks("5");
+var yAxis = d3.svg.axis()
+              .scale(yScale)
+              .orient("left")
+              .ticks(5);
+
+/*
+ * SVG Objects
+ * 1. Create the main SVG placeholder and append it to <body>
+ * 2. Create the type of SVG to be used and append it with data
+ * 3. Append data values in text form to the SVG
+ */
 var svgPlaceholder = d3.select("body")
                           .append("svg")
                           .attr("height",height)
-                          .attr("width",width);
-
-
+                          .attr("width",width)
+                          .attr("class","chart");
 
 svgPlaceholder.selectAll("rect")
       .data(data)
@@ -67,11 +90,11 @@ svgPlaceholder.selectAll("rect")
         return i * width/data.length;
       })
       .attr("y",function(d){
-        return height-(chartScale(d));
+        return height-(yScale(d))-20;
       })
       .attr("width",width/data.length - padding)
       .attr("height",function(d){
-        return chartScale(d);
+        return yScale(d);
       })
 
 svgPlaceholder.selectAll("text")
@@ -83,9 +106,18 @@ svgPlaceholder.selectAll("text")
      return  i * (width/data.length) + (width / data.length - padding) / 2;;
    })
    .attr("y",function(d){
-     return height-(chartScale(d)) + 15;
+     return height-(yScale(d)) - 10;
    })
-   .attr("text-anchor", "middle")
-   .attr("font-family", "sans-serif")
-   .attr("font-size", "8px")
-   .attr("fill", "white");
+   .attr("class","values");
+
+/* Append the Axes */
+//Create X Axis
+svgPlaceholder.append("g")
+                .attr("class","axis")
+                .attr("transform", "translate(0," + (height - 20) + ")")
+                .call(xAxis);
+
+//Create Y axis
+svgPlaceholder.append("g")
+                .attr("class", "axis")
+                .call(yAxis);
