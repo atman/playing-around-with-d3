@@ -31,6 +31,7 @@ var circleAttributes = circles
                             .attr("r",function (d) {return d.radius;})
                             .style("fill",function(d){return d.color;});*/
 
+
 var data = [];
 var width = 1000;
 var height = 300;
@@ -39,7 +40,7 @@ var max = 0;
 var min = 0;
 
 for (var i = 0; i < 50; i++) {           //Loop 25 times
-    var newNumber = Math.round(Math.random() * 50);
+    var newNumber = Math.round(Math.random() * 100);
     //New random number (0-30)
     data.push(newNumber);
 }
@@ -56,15 +57,20 @@ max = d3.max(data);
 var xScale = d3.scale.linear()
                       .domain([0,data.length])
                       .range([0,width]);
+
+var xScaleOrdinal = d3.scale.ordinal()
+                        .domain(d3.range(data.length))
+                        .rangeRoundBands([0,width],0.05);
+
 var yScale = d3.scale.linear()
                      .domain([min,max]) //input
-                     .rangeRound([min, height-20]) //output
+                     .rangeRound([height-20,min]) //output
                      .nice();
 
 var xAxis = d3.svg.axis()
-              .scale(xScale)
+              .scale(xScaleOrdinal)
               .orient("bottom")
-              .ticks("5");
+              .ticks("1");
 var yAxis = d3.svg.axis()
               .scale(yScale)
               .orient("left")
@@ -87,15 +93,32 @@ svgPlaceholder.selectAll("rect")
       .enter()
       .append("rect")
       .attr("x",function(d,i){          //d is actual value, i is the position of the data in the array
-        return i * width/data.length;
+        //return i * width/data.length;
+        return xScaleOrdinal(i);
       })
       .attr("y",function(d){
         return height-(yScale(d))-20;
       })
-      .attr("width",width/data.length - padding)
+      .attr("width",xScaleOrdinal.rangeBand())
       .attr("height",function(d){
         return yScale(d);
       })
+
+/*
+ * FUNCTIONS
+ */
+      var sortBars = function() {
+
+              svgPlaceholder.selectAll("rect")
+                 .sort(function(a, b) {
+                       return d3.descending(a, b);
+                 })
+                 .transition()
+                 .duration(1000)
+                 .attr("x", function(d, i) {
+                       return xScaleOrdinal(i);
+                 });
+      };
 
 svgPlaceholder.selectAll("text")
    .data(data)
@@ -103,7 +126,8 @@ svgPlaceholder.selectAll("text")
    .append("text")
    .text(function(d){return d;})
    .attr("x",function(d,i){          //d is actual value, i is the position of the data in the array
-     return  i * (width/data.length) + (width / data.length - padding) / 2;;
+     //return  i * (width/data.length) + (width / data.length - padding) / 2;
+     return xScaleOrdinal(i) + (width / data.length - padding) / 2;
    })
    .attr("y",function(d){
      return height-(yScale(d)) - 10;
@@ -121,3 +145,44 @@ svgPlaceholder.append("g")
 svgPlaceholder.append("g")
                 .attr("class", "axis")
                 .call(yAxis);
+
+/*
+ * EVENT LISTENERS
+ */
+
+ d3.select("#sort")
+    .on("click",function(){
+      sortBars();
+    });
+
+d3.select("p")
+    .on("click",function(){
+      data = [];
+      for (var i = 0; i < 50; i++) {           //Loop 25 times
+          var newNumber = Math.round(Math.random() * 100);
+          //New random number (0-30)
+          data.push(newNumber);
+      }
+
+      //Update UI
+      svgPlaceholder.selectAll("rect")
+          .data(data)
+          .transition()
+          .duration(750)
+          .attr("y", function(d){
+            return height - yScale(d)-20;
+          })
+          .attr("height", function(d){
+            return yScale(d);
+          });
+
+      svgPlaceholder.selectAll("text")
+         .data(data)
+         .transition()
+         .duration(750)
+         .attr("y",function(d){
+           return height-(yScale(d)) - 10;` `
+         })
+         .text(function(d){return d;})
+         .attr("class","values");
+    });
